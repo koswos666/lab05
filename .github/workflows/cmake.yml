@@ -9,17 +9,19 @@ jobs:
     steps:
     - uses: actions/checkout@v2
 
-    - name: Install dependencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y build-essential cmake python3-pip
-        pip3 install pytest pytest-cov coveralls
+    - name: Clean build directory
+      run: rm -rf build || true  # Игнорируем ошибку, если папки нет
+
+    - name: Create build directory
+      run: mkdir -p build  # -p предотвращает ошибку если папка существует
 
     - name: Build
       run: |
-        mkdir build
         cd build
         cmake ..
         make
 
-        path-to-lcov: ./coverage.xml
+    - name: Run tests
+      run: |
+        cd build
+        ctest --output-on-failure
