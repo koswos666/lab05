@@ -1,0 +1,7 @@
+add_test([=[AccountTest.InitialBalance]=]  /home/vboxuser/lab05/build/banking_tests [==[--gtest_filter=AccountTest.InitialBalance]==] --gtest_also_run_disabled_tests)
+set_tests_properties([=[AccountTest.InitialBalance]=]  PROPERTIES WORKING_DIRECTORY /home/vboxuser/lab05/build SKIP_REGULAR_EXPRESSION [==[\[  SKIPPED \]]==])
+add_test([=[AccountTest.LockUnlock]=]  /home/vboxuser/lab05/build/banking_tests [==[--gtest_filter=AccountTest.LockUnlock]==] --gtest_also_run_disabled_tests)
+set_tests_properties([=[AccountTest.LockUnlock]=]  PROPERTIES WORKING_DIRECTORY /home/vboxuser/lab05/build SKIP_REGULAR_EXPRESSION [==[\[  SKIPPED \]]==])
+add_test([=[TransactionTest.InsufficientFunds]=]  /home/vboxuser/lab05/build/banking_tests [==[--gtest_filter=TransactionTest.InsufficientFunds]==] --gtest_also_run_disabled_tests)
+set_tests_properties([=[TransactionTest.InsufficientFunds]=]  PROPERTIES WORKING_DIRECTORY /home/vboxuser/lab05/build SKIP_REGULAR_EXPRESSION [==[\[  SKIPPED \]]==])
+set(  banking_tests_TESTS AccountTest.InitialBalance AccountTest.LockUnlock TransactionTest.InsufficientFunds)

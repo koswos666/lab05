@@ -1,0 +1,81 @@
+Start testing: May 08 20:12 MSK
+----------------------------------------------------------
+1/3 Testing: AccountTest.InitialBalance
+1/3 Test: AccountTest.InitialBalance
+Command: "/home/vboxuser/lab05/build/banking_tests" "--gtest_filter=AccountTest.InitialBalance" "--gtest_also_run_disabled_tests"
+Directory: /home/vboxuser/lab05/build
+"AccountTest.InitialBalance" start time: May 08 20:12 MSK
+Output:
+----------------------------------------------------------
+Note: Google Test filter = AccountTest.InitialBalance
+[==========] Running 1 test from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 1 test from AccountTest
+[ RUN      ] AccountTest.InitialBalance
+[       OK ] AccountTest.InitialBalance (0 ms)
+[----------] 1 test from AccountTest (0 ms total)
+
+[----------] Global test environment tear-down
+[==========] 1 test from 1 test suite ran. (0 ms total)
+[  PASSED  ] 1 test.
+<end of output>
+Test time =   0.01 sec
+----------------------------------------------------------
+Test Passed.
+"AccountTest.InitialBalance" end time: May 08 20:12 MSK
+"AccountTest.InitialBalance" time elapsed: 00:00:00
+----------------------------------------------------------
+
+2/3 Testing: AccountTest.LockUnlock
+2/3 Test: AccountTest.LockUnlock
+Command: "/home/vboxuser/lab05/build/banking_tests" "--gtest_filter=AccountTest.LockUnlock" "--gtest_also_run_disabled_tests"
+Directory: /home/vboxuser/lab05/build
+"AccountTest.LockUnlock" start time: May 08 20:12 MSK
+Output:
+----------------------------------------------------------
+Note: Google Test filter = AccountTest.LockUnlock
+[==========] Running 1 test from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 1 test from AccountTest
+[ RUN      ] AccountTest.LockUnlock
+[       OK ] AccountTest.LockUnlock (0 ms)
+[----------] 1 test from AccountTest (0 ms total)
+
+[----------] Global test environment tear-down
+[==========] 1 test from 1 test suite ran. (0 ms total)
+[  PASSED  ] 1 test.
+<end of output>
+Test time =   0.01 sec
+----------------------------------------------------------
+Test Passed.
+"AccountTest.LockUnlock" end time: May 08 20:12 MSK
+"AccountTest.LockUnlock" time elapsed: 00:00:00
+----------------------------------------------------------
+
+3/3 Testing: TransactionTest.InsufficientFunds
+3/3 Test: TransactionTest.InsufficientFunds
+Command: "/home/vboxuser/lab05/build/banking_tests" "--gtest_filter=TransactionTest.InsufficientFunds" "--gtest_also_run_disabled_tests"
+Directory: /home/vboxuser/lab05/build
+"TransactionTest.InsufficientFunds" start time: May 08 20:12 MSK
+Output:
+----------------------------------------------------------
+Note: Google Test filter = TransactionTest.InsufficientFunds
+[==========] Running 1 test from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 1 test from TransactionTest
+[ RUN      ] TransactionTest.InsufficientFunds
+[       OK ] TransactionTest.InsufficientFunds (0 ms)
+[----------] 1 test from TransactionTest (0 ms total)
+
+[----------] Global test environment tear-down
+[==========] 1 test from 1 test suite ran. (1 ms total)
+[  PASSED  ] 1 test.
+<end of output>
+Test time =   0.01 sec
+----------------------------------------------------------
+Test Passed.
+"TransactionTest.InsufficientFunds" end time: May 08 20:12 MSK
+"TransactionTest.InsufficientFunds" time elapsed: 00:00:00
+----------------------------------------------------------
+
+End testing: May 08 20:12 MSK

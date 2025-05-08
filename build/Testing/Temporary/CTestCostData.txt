@@ -1,0 +1,5 @@
+AccountTest.InitialBalance 3 0.00473767
+AccountTest.LockUnlock 3 0.00369805
+TransactionTest.SuccessfulTransaction 1 0.00760849
+TransactionTest.InsufficientFunds 1 0.0105216
+---
