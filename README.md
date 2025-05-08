@@ -1,5 +1,5 @@
-## Laboratory work V
 
+ HEAD
 Данная лабораторная работа посвещена изучению фреймворков для тестирования на примере **GTest**
 
 ```sh
@@ -159,3 +159,4 @@ $ gist REPORT.md
 Copyright (c) 2015-2021 The ISC Authors
 ```
 [![Coverage Status](https://coveralls.io/repos/github/koswos666/lab05/badge.svg?branch=master)](https://coveralls.io/github/koswos666/lab05?branch=master)
+ 31a3a305717c9cc2e003cf55875e6aa6fc2cbe61
