@@ -34,3 +34,11 @@ target_link_libraries(tests PRIVATE
 enable_testing()
 include(GoogleTest)
 gtest_discover_tests(tests)
+
+find_package(GTest REQUIRED)
+find_package(GMock REQUIRED)
+
+target_link_libraries(tests PRIVATE
+    GTest::GTest
+    GMock::GMock
+)

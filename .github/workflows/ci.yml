@@ -1,6 +1,10 @@
 name: CI Pipeline
 
-on: [push, pull_request]
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
 
 jobs:
   build-and-test:
@@ -10,31 +14,10 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v3
       
-    - name: Install basic dependencies
+    - name: Install dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y cmake g++ build-essential lcov
-        
-    - name: Install Google Test and Mock (modern approach)
-      run: |
-        sudo apt-get install -y libgtest-dev libgmock-dev || true
-        
-        sudo apt-get install -y git
-        git clone https://github.com/google/googletest.git -b release-1.13.0
-        cd googletest
-        mkdir build
-        cd build
-        cmake ..
-        make
-        sudo make install
-        cd ../..
-        
-    - name: Verify GMock installation
-      run: |
-        ls -la /usr/local/include/gmock
-        ls -la /usr/local/lib/libgmock*
-        ls -la /usr/include/gmock
-        ls -la /usr/lib/libgmock*
+        sudo apt-get install -y cmake g++ build-essential lcov libgtest-dev libgmock-dev
         
     - name: Configure project
       run: |
