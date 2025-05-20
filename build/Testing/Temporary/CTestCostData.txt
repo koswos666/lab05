@@ -1,5 +1,0 @@
-AccountTest.GetBalance 1 0.0123447
-AccountTest.ChangeBalance 1 0.0129371
-TransactionTest.MakeTransaction 1 0.00812728
-TransactionTest.MockDatabase 1 0.00778437
----

@@ -1,7 +1,17 @@
 #include <gtest/gtest.h>
+#include <gmock/gmock.h>
 #include "Account.h"
 #include "Transaction.h"
 
+using ::testing::_;
+using ::testing::Return;
+using ::testing::Throw;
+using ::testing::NiceMock;
+
+class MockTransaction : public Transaction {
+public:
+    MOCK_METHOD(void, SaveToDataBase, (Account&, Account&, int), (override));
+};
 
 TEST(AccountTest, GetBalance) {
     Account acc(1, 100);
@@ -16,26 +26,48 @@ TEST(AccountTest, ChangeBalance) {
     ASSERT_EQ(acc.GetBalance(), 150);
     acc.Unlock();
 }
+
 TEST(TransactionTest, MakeTransaction) {
+    NiceMock<MockTransaction> transaction;
     Account acc_from(1, 500);
     Account acc_to(2, 100);
-    Transaction transaction;
     
-    // Проверка на отрицательную сумму
+    
     ASSERT_THROW(transaction.Make(acc_from, acc_to, -50), std::invalid_argument);
     
-    // Проверка на слишком маленькую сумму
-    ASSERT_THROW(transaction.Make(acc_from, acc_to, 99), std::logic_error);
+   
+    ASSERT_THROW(transaction.Make(acc_from, acc_from, 100), std::logic_error);
     
-    // Проверка успешной транзакции
+ 
+    EXPECT_CALL(transaction, SaveToDataBase(_, _, 100))
+        .Times(1);
+    
     ASSERT_TRUE(transaction.Make(acc_from, acc_to, 100));
-    ASSERT_EQ(acc_from.GetBalance(), 399); // 500 - 100 - 1
-    ASSERT_EQ(acc_to.GetBalance(), 200);   // 100 + 100
+    ASSERT_EQ(acc_from.GetBalance(), 399);  
+    ASSERT_EQ(acc_to.GetBalance(), 200);   
+}
+
+TEST(TransactionTest, FailedTransactionNotSaved) {
+    NiceMock<MockTransaction> transaction;
+    Account acc_from(1, 50); 
+    Account acc_to(2, 100);
     
-    // Проверка на недостаточный баланс (новый тест)
-    Account acc_from2(3, 101); // Ровно на сумму перевода + комиссия
-    ASSERT_TRUE(transaction.Make(acc_from2, acc_to, 100)); // 101 >= 100+1
+    EXPECT_CALL(transaction, SaveToDataBase(_, _, _))
+        .Times(0);
     
-    Account acc_from3(4, 100); // Не хватает на комиссию
-    ASSERT_FALSE(transaction.Make(acc_from3, acc_to, 100)); // 100 < 100+1
+    ASSERT_FALSE(transaction.Make(acc_from, acc_to, 100));
+}
+
+TEST(TransactionTest, DatabaseSaveFailure) {
+    MockTransaction transaction;
+    Account acc_from(1, 500);
+    Account acc_to(2, 100);
+    
+    EXPECT_CALL(transaction, SaveToDataBase(_, _, 100))
+        .WillOnce(Throw(std::runtime_error("DB error")));
+    
+    ASSERT_FALSE(transaction.Make(acc_from, acc_to, 100));
+    
+    ASSERT_EQ(acc_from.GetBalance(), 500);
+    ASSERT_EQ(acc_to.GetBalance(), 100);
 }

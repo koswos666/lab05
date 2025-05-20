@@ -1,23 +1,24 @@
 #pragma once
 
-class Account;
+#include <iostream>  // Добавлено для std::cout
+#include <string>    // Для std::string
+
+class Account;  // Forward declaration
 
 class Transaction {
- public:
-  Transaction();
-  
-  int fee() const { return fee_; }
-  virtual ~Transaction();
+public:
+    Transaction();
+    virtual ~Transaction();
 
-  bool Make(Account& from, Account& to, int sum);
-  void set_fee(int fee) { fee_ = fee; }
+    bool Make(Account& from, Account& to, int sum);
+    int fee() const { return fee_; }
+    void set_fee(int fee) { fee_ = fee; }
 
- private:
-  void Credit(Account& accout, int sum);
-  bool Debit(Account& accout, int sum);
+protected:
+    virtual void SaveToDataBase(Account& from, Account& to, int sum);  // Только объявление
 
-  // Virtual to test.
-  virtual void SaveToDataBase(Account& from, Account& to, int sum);
-
-  int fee_;
+private:
+    void Credit(Account& account, int sum);
+    bool Debit(Account& account, int sum);
+    int fee_ = 1;
 };

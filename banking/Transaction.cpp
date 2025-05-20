@@ -58,8 +58,7 @@ bool Transaction::Debit(Account& accout, int sum) {
 }
 
 void Transaction::SaveToDataBase(Account& from, Account& to, int sum) {
-  std::cout << from.id() << " send to " << to.id() << " $" << sum << std::endl;
-  std::cout << "Balance " << from.id() << " is " << from.GetBalance()
-            << std::endl;
-  std::cout << "Balance " << to.id() << " is " << to.GetBalance() << std::endl;
+    std::cout << from.id() << " send to " << to.id() << " $" << sum << std::endl;
+    std::cout << "Balance " << from.id() << " is " << from.GetBalance() << std::endl;
+    std::cout << "Balance " << to.id() << " is " << to.GetBalance() << std::endl;
 }

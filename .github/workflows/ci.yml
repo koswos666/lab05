@@ -35,12 +35,15 @@ jobs:
     - name: Generate coverage
       run: |
         cd build
-        lcov --capture --directory . --output-file coverage.info \
-             --rc geninfo_unexecuted_blocks=1 \
-             --ignore-errors mismatch
-        lcov --remove coverage.info '/usr/*' '*/test/*' --output-file coverage.info
-        lcov --list coverage.info || echo "Coverage generation completed with warnings"
-        
+        lcov --capture --directory . --output-file coverage.info --rc lcov_branch_coverage=1
+        lcov --remove coverage.info \
+             '*/usr/*' \
+             '*/_deps/*' \
+             '*/test/*' \
+             '*/googletest/*' \
+             '*/gmock/*' \
+             --output-file coverage.info
+        lcov --list coverage.info
     - name: Upload coverage to Coveralls
       uses: coverallsapp/github-action@master
       with:
