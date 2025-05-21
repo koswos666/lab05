@@ -7,12 +7,9 @@
 #include "Account.h"
 
 namespace {
-// RAII
 struct Guard {
   Guard(Account& account) : account_(&account) { account_->Lock(); }
-
   ~Guard() { account_->Unlock(); }
-
  private:
   Account* account_;
 };
@@ -30,16 +27,18 @@ bool Transaction::Make(Account& from, Account& to, int sum) {
   Guard guard_from(from);
   Guard guard_to(to);
 
-  // Проверяем достаточно ли средств с учетом комиссии
+  try {
+    SaveToDataBase(from, to, sum);
+  } catch (...) {
+    return false;
+  }
+
   if (from.GetBalance() < sum + fee_) {
     return false;
   }
 
-  // Выполняем транзакцию
   Credit(to, sum);
   Debit(from, sum + fee_);
-
-  SaveToDataBase(from, to, sum);
   return true;
 }
 
@@ -50,7 +49,7 @@ void Transaction::Credit(Account& accout, int sum) {
 
 bool Transaction::Debit(Account& accout, int sum) {
   assert(sum > 0);
-  if (accout.GetBalance() > sum) {
+  if (accout.GetBalance() >= sum) {
     accout.ChangeBalance(-sum);
     return true;
   }
@@ -59,6 +58,4 @@ bool Transaction::Debit(Account& accout, int sum) {
 
 void Transaction::SaveToDataBase(Account& from, Account& to, int sum) {
     std::cout << from.id() << " send to " << to.id() << " $" << sum << std::endl;
-    std::cout << "Balance " << from.id() << " is " << from.GetBalance() << std::endl;
-    std::cout << "Balance " << to.id() << " is " << to.GetBalance() << std::endl;
 }

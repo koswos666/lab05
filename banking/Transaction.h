@@ -1,9 +1,6 @@
 #pragma once
 
-#include <iostream>  // Добавлено для std::cout
-#include <string>    // Для std::string
-
-class Account;  // Forward declaration
+class Account;
 
 class Transaction {
 public:
@@ -15,7 +12,7 @@ public:
     void set_fee(int fee) { fee_ = fee; }
 
 protected:
-    virtual void SaveToDataBase(Account& from, Account& to, int sum);  // Только объявление
+    virtual void SaveToDataBase(Account& from, Account& to, int sum);
 
 private:
     void Credit(Account& account, int sum);
