@@ -40,18 +40,15 @@ jobs:
         cd build
         lcov --capture --directory . --output-file coverage.info \
           --branch-coverage \
-          --ignore-errors mismatch,unused,source
-        
-        lcov --remove coverage.info \
-             '/usr/*' \
-             '*/_deps/*' \
-             '*/test/*' \
-             '*/googletest/*' \
-             '*/gmock/*' \
-             '*/include/*' \
-             --output-file coverage.info
-        
-        lcov --list coverage.info --no-recursion
+          --ignore-errors mismatch,source,unused \
+          --exclude '/usr/*' \
+          --exclude '*/_deps/*' \
+          --exclude '*/test/*' \
+          --exclude '*/googletest/*' \
+          --exclude '*/gmock/*' \
+          --exclude '*/include/*'
+
+        lcov --list coverage.info --rc lcov_branch_coverage=1
 
     - name: Upload to Coveralls
       uses: coverallsapp/github-action@master
