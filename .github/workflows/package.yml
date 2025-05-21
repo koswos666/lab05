@@ -1,0 +1,77 @@
+name: Package
+
+on:
+  push:
+    tags: "*"
+
+jobs:
+  package:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+      fail-fast: false
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Clean workspace
+      shell: bash
+      run: |
+        rm -rf build/ || true
+        if [ "${{ matrix.os }}" == "windows-latest" ]; then
+          rm -rf build\\ || true
+        fi
+
+    - name: Install dependencies (Linux)
+      if: matrix.os == 'ubuntu-latest'
+      shell: bash
+      run: |
+        sudo apt-get update && sudo apt-get install -y rpm
+
+    - name: Configure CMake
+      shell: bash
+      run: |
+        if [ "${{ matrix.os }}" == "windows-latest" ]; then
+          cmake -B build -G "Visual Studio 17 2022" -A x64 \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DBUILD_SHARED_LIBS=OFF \
+            -DCMAKE_CXX_FLAGS="/EHsc /W3"
+        else
+          cmake -B build -DCMAKE_BUILD_TYPE=Release \
+            -DCPACK_DEBIAN_PACKAGE_MAINTAINER="Sweta <hostikovasweta@gmail.com>"
+        fi
+
+    - name: Build
+      shell: bash
+      run: |
+        if [ "${{ matrix.os }}" == "windows-latest" ]; then
+          cmake --build build --config Release -- /m
+        else
+          cmake --build build --config Release
+        fi
+
+    - name: Package
+      shell: bash
+      run: |
+        cd build
+        case "${{ matrix.os }}" in
+          "ubuntu-latest")
+            cpack -C DEB
+            ;;
+          "macos-latest")
+            cpack -C DragNDrop
+            ;;
+          "windows-latest")
+            cpack -C WIX
+            ;;
+        esac
+
+    - uses: actions/upload-artifact@v4
+      with:
+        name: package-${{ matrix.os }}
+        path: |
+          build/*.deb
+          build/*.dmg
+          build/*.msi
+
