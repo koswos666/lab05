@@ -10,8 +10,7 @@ using ::testing::NiceMock;
 // Класс для тестирования приватных методов
 class TransactionTestFriend : public Transaction {
 public:
-    using Transaction::Credit;
-    using Transaction::Debit;
+    // Удалены using-декларации
 };
 
 class MockTransaction : public Transaction {
@@ -85,12 +84,12 @@ TEST(TransactionTest, DatabaseErrorHandling) {
     ASSERT_EQ(acc_to.GetBalance(), 100);
 }
 
-// Тесты для приватных методов через специальный класс
+// Тесты для приватных методов через дружественный класс
 TEST(TransactionTest, DebitFailure) {
     TransactionTestFriend transaction;
     Account acc(1, 50);
     acc.Lock();
-    ASSERT_FALSE(transaction.Debit(acc, 100));
+    ASSERT_FALSE(transaction.Debit(acc, 100)); // Прямой вызов приватного метода
     ASSERT_EQ(acc.GetBalance(), 50);
 }
 
@@ -99,7 +98,7 @@ TEST(TransactionTest, CreditDebitOperations) {
     Account acc(1, 100);
     acc.Lock();
     
-    transaction.Credit(acc, 50);
+    transaction.Credit(acc, 50); // Прямой вызов приватного метода
     ASSERT_EQ(acc.GetBalance(), 150);
     
     ASSERT_TRUE(transaction.Debit(acc, 50));
