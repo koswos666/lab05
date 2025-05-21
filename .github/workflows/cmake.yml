@@ -17,7 +17,7 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y cmake g++ build-essential lcov libgtest-dev libgmock-dev
+        sudo apt-get install -y cmake g++ build-essential lcov
         
     - name: Configure project
       run: |
@@ -38,13 +38,15 @@ jobs:
     - name: Generate coverage
       run: |
         cd build
-        lcov --capture --directory . --output-file coverage.info
+        lcov --capture --directory . --output-file coverage.info --rc lcov_branch_coverage=1
         lcov --remove coverage.info \
              '*/usr/*' \
              '*/_deps/*' \
              '*/test/*' \
+             '*/googletest/*' \
+             '*/gmock/*' \
              --output-file coverage.info
-        lcov --list coverage.info
+        lcov --list coverage.info --ignore-errors
 
     - name: Upload to Coveralls
       uses: coverallsapp/github-action@master
@@ -52,3 +54,5 @@ jobs:
         github-token: ${{ secrets.GITHUB_TOKEN }}
         coveralls-token: ${{ secrets.COVERALLS_REPO_TOKEN }}
         path-to-lcov: build/coverage.info
+        flag-name: linux
+        parallel: true
