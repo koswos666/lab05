@@ -28,13 +28,16 @@ TEST(AccountTest, LockUnlock) {
 
 TEST(AccountTest, ChangeBalance) {
     Account acc(3, 300);
+    
     ASSERT_THROW(acc.ChangeBalance(100), std::runtime_error);
     
+   
     acc.Lock();
     ASSERT_NO_THROW(acc.ChangeBalance(-200));
     ASSERT_EQ(acc.GetBalance(), 100);
     
-    ASSERT_THROW(acc.ChangeBalance(-200), std::runtime_error); 
+    acc.Unlock();
+    ASSERT_THROW(acc.ChangeBalance(-200), std::runtime_error);
 }
 
 TEST(TransactionTest, FullFlow) {
