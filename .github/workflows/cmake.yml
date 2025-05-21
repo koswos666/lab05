@@ -17,7 +17,7 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y cmake g++ build-essential lcov
+        sudo apt-get install -y cmake g++ build-essential lcov libgtest-dev libgmock-dev
         
     - name: Configure project
       run: |
@@ -28,27 +28,9 @@ jobs:
     - name: Build project
       run: |
         cd build
-        cmake --build . --config Debug --parallel 2
+        cmake --build . --parallel 2
         
     - name: Run tests
       run: |
         cd build
         ctest --output-on-failure
-        
-    - name: Generate coverage
-      if: success()
-      run: |
-        cd build
-        lcov --capture --directory . --output-file coverage.info
-        lcov --remove coverage.info \
-             '*/usr/*' \
-             '*/_deps/*' \
-             '*/test/*' \
-             --output-file coverage.info
-        lcov --list coverage.info
-        
-    - name: Upload coverage
-      uses: coverallsapp/github-action@master
-      with:
-        github-token: ${{ secrets.GITHUB_TOKEN }}
-        path-to-lcov: build/coverage.info

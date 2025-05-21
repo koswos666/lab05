@@ -9,7 +9,7 @@ using ::testing::Throw;
 using ::testing::NiceMock;
 
 class MockTransaction : public Transaction {
-public:
+protected:
     MOCK_METHOD(void, SaveToDataBase, (Account&, Account&, int), (override));
 };
 
