@@ -4,7 +4,7 @@ class Account;
 
 class Transaction {
 public:
-    friend class TransactionTestFriend;  // Добавьте эту строку
+    friend class TransactionTestFriend;  // Дружественный класс
     
     Transaction();
     virtual ~Transaction();

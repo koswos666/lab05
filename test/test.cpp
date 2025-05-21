@@ -7,17 +7,17 @@ using ::testing::_;
 using ::testing::Throw;
 using ::testing::NiceMock;
 
-// Класс для тестирования приватных методов
 class TransactionTestFriend : public Transaction {
 public:
-    // Удалены using-декларации
+    // Явно объявляем методы публичными
+    void TestCredit(Account& acc, int sum) { Credit(acc, sum); }
+    bool TestDebit(Account& acc, int sum) { return Debit(acc, sum); }
 };
 
 class MockTransaction : public Transaction {
 public:
     MOCK_METHOD(void, SaveToDataBase, (Account&, Account&, int), (override));
 };
-
 TEST(AccountTest, GetBalance) {
     Account acc(1, 100);
     ASSERT_EQ(acc.GetBalance(), 100);
@@ -84,12 +84,11 @@ TEST(TransactionTest, DatabaseErrorHandling) {
     ASSERT_EQ(acc_to.GetBalance(), 100);
 }
 
-// Тесты для приватных методов через дружественный класс
 TEST(TransactionTest, DebitFailure) {
     TransactionTestFriend transaction;
     Account acc(1, 50);
     acc.Lock();
-    ASSERT_FALSE(transaction.Debit(acc, 100)); // Прямой вызов приватного метода
+    ASSERT_FALSE(transaction.TestDebit(acc, 100));  // Используем обёртку
     ASSERT_EQ(acc.GetBalance(), 50);
 }
 
@@ -98,11 +97,11 @@ TEST(TransactionTest, CreditDebitOperations) {
     Account acc(1, 100);
     acc.Lock();
     
-    transaction.Credit(acc, 50); // Прямой вызов приватного метода
+    transaction.TestCredit(acc, 50);  // Используем обёртку
     ASSERT_EQ(acc.GetBalance(), 150);
     
-    ASSERT_TRUE(transaction.Debit(acc, 50));
+    ASSERT_TRUE(transaction.TestDebit(acc, 50));
     ASSERT_EQ(acc.GetBalance(), 100);
     
-    ASSERT_FALSE(transaction.Debit(acc, 150));
+    ASSERT_FALSE(transaction.TestDebit(acc, 150));
 }
