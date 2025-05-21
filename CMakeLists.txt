@@ -1,15 +1,12 @@
 cmake_minimum_required(VERSION 3.14)
 project(lab05)
 
-
-cmake_policy(SET CMP0135 NEW)
-
+set(CMAKE_CXX_STANDARD 17)
 
 option(ENABLE_COVERAGE "Enable coverage reporting" ON)
 if(ENABLE_COVERAGE)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fprofile-arcs -ftest-coverage")
 endif()
-
 
 include(FetchContent)
 FetchContent_Declare(
@@ -34,11 +31,3 @@ target_link_libraries(tests PRIVATE
 enable_testing()
 include(GoogleTest)
 gtest_discover_tests(tests)
-
-find_package(GTest REQUIRED)
-find_package(GMock REQUIRED)
-
-target_link_libraries(tests PRIVATE
-    GTest::GTest
-    GMock::GMock
-)
