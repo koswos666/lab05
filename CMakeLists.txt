@@ -31,3 +31,5 @@ target_link_libraries(tests PRIVATE
 enable_testing()
 include(GoogleTest)
 gtest_discover_tests(tests)
+
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fprofile-arcs -ftest-coverage")
