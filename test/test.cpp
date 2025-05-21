@@ -7,6 +7,13 @@ using ::testing::_;
 using ::testing::Throw;
 using ::testing::NiceMock;
 
+// Класс для тестирования приватных методов
+class TransactionTestFriend : public Transaction {
+public:
+    using Transaction::Credit;
+    using Transaction::Debit;
+};
+
 class MockTransaction : public Transaction {
 public:
     MOCK_METHOD(void, SaveToDataBase, (Account&, Account&, int), (override));
@@ -52,9 +59,7 @@ TEST(TransactionTest, InvalidTransactions) {
     Account acc2(2, 200);
     
     ASSERT_THROW(transaction.Make(acc1, acc2, -50), std::invalid_argument);
-    
     ASSERT_THROW(transaction.Make(acc1, acc1, 100), std::logic_error);
-    
     ASSERT_THROW(transaction.Make(acc1, acc2, 99), std::logic_error);
 }
 
@@ -65,15 +70,6 @@ TEST(TransactionTest, InsufficientFunds) {
     
     EXPECT_CALL(transaction, SaveToDataBase(_, _, _)).Times(0);
     ASSERT_FALSE(transaction.Make(acc_from, acc_to, 100));
-}
-
-TEST(TransactionTest, DebitFailure) {
-    Transaction transaction;
-    Account acc(1, 50);
-    acc.Lock();
-  
-    ASSERT_FALSE(transaction.Debit(acc, 100));
-    ASSERT_EQ(acc.GetBalance(), 50);
 }
 
 TEST(TransactionTest, DatabaseErrorHandling) {
@@ -89,14 +85,23 @@ TEST(TransactionTest, DatabaseErrorHandling) {
     ASSERT_EQ(acc_to.GetBalance(), 100);
 }
 
+// Тесты для приватных методов через специальный класс
+TEST(TransactionTest, DebitFailure) {
+    TransactionTestFriend transaction;
+    Account acc(1, 50);
+    acc.Lock();
+    ASSERT_FALSE(transaction.Debit(acc, 100));
+    ASSERT_EQ(acc.GetBalance(), 50);
+}
+
 TEST(TransactionTest, CreditDebitOperations) {
-    Transaction transaction;
+    TransactionTestFriend transaction;
     Account acc(1, 100);
     acc.Lock();
     
     transaction.Credit(acc, 50);
     ASSERT_EQ(acc.GetBalance(), 150);
-
+    
     ASSERT_TRUE(transaction.Debit(acc, 50));
     ASSERT_EQ(acc.GetBalance(), 100);
     

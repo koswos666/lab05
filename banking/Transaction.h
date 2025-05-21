@@ -15,6 +15,8 @@ protected:
     virtual void SaveToDataBase(Account& from, Account& to, int sum);
 
 private:
+    friend class TransactionTest; 
+    
     void Credit(Account& account, int sum);
     bool Debit(Account& account, int sum);
     int fee_ = 1;
