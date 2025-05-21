@@ -24,8 +24,8 @@ add_executable(tests
 
 target_link_libraries(tests PRIVATE
     banking
-    gtest
-    gmock
+    GTest::gtest_main
+    GMock::gmock_main
 )
 
 enable_testing()
