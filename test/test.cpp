@@ -41,7 +41,7 @@ TEST(AccountTest, ChangeBalanceEdgeCases) {
 
 TEST(TransactionTest, FullCoverage) {
     TransactionTestFriend tr;
-    Account acc1(1, 1000);
+    Account acc1(1, 999);
     Account acc2(2, 500);
     ASSERT_THROW(tr.Make(acc1, acc1, 100), std::logic_error); 
     ASSERT_THROW(tr.Make(acc1, acc2, -50), std::invalid_argument); 
@@ -49,7 +49,7 @@ TEST(TransactionTest, FullCoverage) {
 
     ASSERT_FALSE(tr.Make(acc1, acc2, 999));
 
-
+    acc1.ChangeBalance(1000 - 999); 
     ASSERT_TRUE(tr.Make(acc1, acc2, 500));
     ASSERT_EQ(acc1.GetBalance(), 499);
     ASSERT_EQ(acc2.GetBalance(), 1000);
