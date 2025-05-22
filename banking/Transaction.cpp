@@ -9,7 +9,7 @@ namespace {
         Guard(Account& account) : account_(&account) { account_->Lock(); }
         ~Guard() { account_->Unlock(); }
     private:
-        Account* account_;
+        Account* account_; // Исправлено с ^ на *
     };
 }
 
@@ -17,7 +17,7 @@ Transaction::Transaction() : fee_(1) {}
 
 Transaction::~Transaction() {}
 
-bool Transaction::Make(Account& from, Account& to, int sum) {
+bool Transaction::Make(Account& from, Account& to, int sum) { // Исправлено Accounts -> Account&
     if (from.id() == to.id()) throw std::logic_error("invalid action");
     if (sum < 0) throw std::invalid_argument("sum can't be negative");
     if (sum < 100) throw std::logic_error("too small");
@@ -30,7 +30,7 @@ bool Transaction::Make(Account& from, Account& to, int sum) {
     }
 
     try {
-        SaveToDataBase(from, to, sum);
+        SaveToDataBase(from, to, sum); // Исправлено SaveToDatabase -> SaveToDataBase
     } catch (...) {
         return false;
     }
