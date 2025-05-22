@@ -48,8 +48,9 @@ TEST(TransactionTest, FullCoverage) {
     ASSERT_THROW(tr.Make(acc1, acc2, 99), std::logic_error); 
 
     ASSERT_FALSE(tr.Make(acc1, acc2, 999));
-
-    acc1.ChangeBalance(1000 - 999); 
+    acc1.Lock(); 
+    acc1.ChangeBalance(1); 
+    acc1.Unlock(); 
     ASSERT_TRUE(tr.Make(acc1, acc2, 500));
     ASSERT_EQ(acc1.GetBalance(), 499);
     ASSERT_EQ(acc2.GetBalance(), 1000);
