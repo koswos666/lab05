@@ -43,20 +43,19 @@ TEST(TransactionTest, FullCoverage) {
     TransactionTestFriend tr;
     Account acc1(1, 1000);
     Account acc2(2, 500);
+    ASSERT_THROW(tr.Make(acc1, acc1, 100), std::logic_error); 
+    ASSERT_THROW(tr.Make(acc1, acc2, -50), std::invalid_argument); 
+    ASSERT_THROW(tr.Make(acc1, acc2, 99), std::logic_error); 
 
-
-    ASSERT_THROW(tr.Make(acc1, acc1, 100), std::logic_error); // Same account
-    ASSERT_THROW(tr.Make(acc1, acc2, -50), std::invalid_argument); // Negative sum
-    ASSERT_THROW(tr.Make(acc1, acc2, 99), std::logic_error); // Sum < 100
-
- 
-    ASSERT_FALSE(tr.Make(acc1, acc2, 950)); // 1000 - (950 + 1) = 49 < 0
+    ASSERT_FALSE(tr.Make(acc1, acc2, 999));
 
 
     ASSERT_TRUE(tr.Make(acc1, acc2, 500));
-    ASSERT_EQ(acc1.GetBalance(), 499); // 1000 - 500 - 1
+    ASSERT_EQ(acc1.GetBalance(), 499);
     ASSERT_EQ(acc2.GetBalance(), 1000);
 }
+
+ 
 
 TEST(TransactionTest, CreditDebitChecks) {
     TransactionTestFriend tr;
