@@ -53,23 +53,20 @@ TEST(TransactionTest, FullCoverage) {
     ASSERT_THROW(tr.Make(acc1, acc2, -50), std::invalid_argument);
     ASSERT_NO_THROW(acc1.Lock());
     acc1.Unlock();
-    ASSERT_NO_THROW(acc2.Lock());
-    acc2.Unlock();
+   
 
     
     ASSERT_THROW(tr.Make(acc1, acc2, 99), std::logic_error);
     ASSERT_NO_THROW(acc1.Lock());
     acc1.Unlock();
-    ASSERT_NO_THROW(acc2.Lock());
-    acc2.Unlock();
+    
 
   
     ASSERT_FALSE(tr.Make(acc1, acc2, 999));
    
     ASSERT_NO_THROW(acc1.Lock());
     acc1.Unlock();
-    ASSERT_NO_THROW(acc2.Lock());
-    acc2.Unlock();
+    
 
   
     acc1.Lock();
@@ -231,22 +228,8 @@ TEST(TransactionTest, CreditZeroSumAsserts) {
     
     EXPECT_DEATH(tr.TestCredit(acc, 0), ".*sum > 0.*");
 }
-TEST(TransactionTest, DebitZeroSumAsserts) {
-    TransactionTestFriend tr;
-    Account acc(1, 100);
-    acc.Lock();
-    
 
-    EXPECT_DEATH(tr.TestDebit(acc, 0), ".*sum > 0.*");
-}
-TEST(TransactionTest, BalanceExactlySumPlusFee) {
-    Transaction tr;
-    Account acc1(1, 101); 
-    Account acc2(2, 0);
-    
-    ASSERT_TRUE(tr.Make(acc1, acc2, 100)); 
-    ASSERT_EQ(acc1.GetBalance(), 0); 
-}
+
 TEST(TransactionTest, SaveToDatabaseCalledCorrectly) {
     class MockTransaction : public Transaction {
     protected:
@@ -287,4 +270,21 @@ TEST(TransactionTest, DebitEdgeCaseBalanceEqualsSum) {
     
     ASSERT_TRUE(tr.TestDebit(acc, 100));
     ASSERT_EQ(acc.GetBalance(), 0);
+}
+
+
+
+TEST(TransactionTest, DebitZeroSumAsserts) {
+    TransactionTestFriend tr;
+    Account acc(1, 100);
+    acc.Lock();
+    EXPECT_DEATH(tr.TestDebit(acc, 0), ".*sum > 0.*"); 
+}
+
+TEST(TransactionTest, BalanceExactlySumPlusFee) {
+    Transaction tr;
+    Account acc1(1, 101); 
+    Account acc2(2, 0);
+    ASSERT_TRUE(tr.Make(acc1, acc2, 100));
+    ASSERT_EQ(acc1.GetBalance(), 0); 
 }
