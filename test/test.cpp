@@ -170,3 +170,34 @@ TEST(AccountTest, DoubleLockThrows) {
     acc.Lock();
     ASSERT_THROW(acc.Lock(), std::runtime_error);
 }
+TEST(TransactionTest, SameAccountIdsThrow) {
+    Transaction tr;
+    Account acc(1, 500);
+    ASSERT_THROW(tr.Make(acc, acc, 100), std::logic_error); 
+}
+TEST(TransactionTest, SmallSumThrow) {
+    Transaction tr;
+    Account acc1(1, 200);
+    Account acc2(2, 0);
+    ASSERT_THROW(tr.Make(acc1, acc2, 99), std::logic_error); 
+}
+TEST(TransactionTest, DatabaseErrorHandling) {
+    class MockTransaction : public Transaction {
+    protected:
+        void SaveToDataBase(Account& from, Account& to, int sum) override {
+            throw std::runtime_error("DB failed");
+        }
+    };
+
+    MockTransaction mockTr;
+    Account acc1(1, 1000);
+    Account acc2(2, 500);
+    ASSERT_FALSE(mockTr.Make(acc1, acc2, 100)); 
+}
+TEST(TransactionTest, DebitFailsWhenLowBalance) {
+    TransactionTestFriend tr;
+    Account acc(1, 50);
+    acc.Lock();
+    ASSERT_FALSE(tr.TestDebit(acc, 100)); 
+    ASSERT_EQ(acc.GetBalance(), 50);
+}
