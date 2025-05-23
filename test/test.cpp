@@ -43,21 +43,44 @@ TEST(TransactionTest, FullCoverage) {
     TransactionTestFriend tr;
     Account acc1(1, 999);
     Account acc2(2, 500);
-    ASSERT_THROW(tr.Make(acc1, acc1, 100), std::logic_error); 
-    ASSERT_THROW(tr.Make(acc1, acc2, -50), std::invalid_argument); 
-    ASSERT_THROW(tr.Make(acc1, acc2, 99), std::logic_error); 
 
-    ASSERT_FALSE(tr.Make(acc1, acc2, 999));
-    acc1.Lock(); 
-    acc1.ChangeBalance(1); 
+   
+    ASSERT_THROW(tr.Make(acc1, acc1, 100), std::logic_error);
+ 
+    ASSERT_NO_THROW(acc1.Lock()); 
     acc1.Unlock(); 
-    ASSERT_TRUE(tr.Make(acc1, acc2, 500));
-    ASSERT_EQ(acc1.GetBalance(), 499);
-    ASSERT_EQ(acc2.GetBalance(), 1000);
-}
+    
+    ASSERT_THROW(tr.Make(acc1, acc2, -50), std::invalid_argument);
+    ASSERT_NO_THROW(acc1.Lock());
+    acc1.Unlock();
+    ASSERT_NO_THROW(acc2.Lock());
+    acc2.Unlock();
+
+    
+    ASSERT_THROW(tr.Make(acc1, acc2, 99), std::logic_error);
+    ASSERT_NO_THROW(acc1.Lock());
+    acc1.Unlock();
+    ASSERT_NO_THROW(acc2.Lock());
+    acc2.Unlock();
+
+  
+    ASSERT_FALSE(tr.Make(acc1, acc2, 999));
+   
+    ASSERT_NO_THROW(acc1.Lock());
+    acc1.Unlock();
+    ASSERT_NO_THROW(acc2.Lock());
+    acc2.Unlock();
+
+  
+    acc1.Lock();
+    acc1.ChangeBalance(1);
+    acc1.Unlock();
 
  
-
+    ASSERT_TRUE(tr.Make(acc1, acc2, 500));
+    ASSERT_EQ(acc1.GetBalance(), 499); 
+    ASSERT_EQ(acc2.GetBalance(), 1000); 
+}
 TEST(TransactionTest, CreditDebitChecks) {
     TransactionTestFriend tr;
     Account acc(1, 100);
@@ -200,4 +223,68 @@ TEST(TransactionTest, DebitFailsWhenLowBalance) {
     acc.Lock();
     ASSERT_FALSE(tr.TestDebit(acc, 100)); 
     ASSERT_EQ(acc.GetBalance(), 50);
+}
+TEST(TransactionTest, CreditZeroSumAsserts) {
+    TransactionTestFriend tr;
+    Account acc(1, 100);
+    acc.Lock();
+    
+    EXPECT_DEATH(tr.TestCredit(acc, 0), ".*sum > 0.*");
+}
+TEST(TransactionTest, DebitZeroSumAsserts) {
+    TransactionTestFriend tr;
+    Account acc(1, 100);
+    acc.Lock();
+    
+
+    EXPECT_DEATH(tr.TestDebit(acc, 0), ".*sum > 0.*");
+}
+TEST(TransactionTest, BalanceExactlySumPlusFee) {
+    Transaction tr;
+    Account acc1(1, 101); 
+    Account acc2(2, 0);
+    
+    ASSERT_TRUE(tr.Make(acc1, acc2, 100)); 
+    ASSERT_EQ(acc1.GetBalance(), 0); 
+}
+TEST(TransactionTest, SaveToDatabaseCalledCorrectly) {
+    class MockTransaction : public Transaction {
+    protected:
+        void SaveToDataBase(Account& from, Account& to, int sum) override {
+            called = true;
+        }
+    public:
+        bool called = false;
+    };
+
+    MockTransaction mockTr;
+    Account acc1(1, 1000);
+    Account acc2(2, 500);
+    
+    ASSERT_TRUE(mockTr.Make(acc1, acc2, 100));
+    ASSERT_TRUE(mockTr.called); 
+}
+TEST(TransactionTest, GuardUnlocksOnDatabaseException) {
+    class MockTransaction : public Transaction {
+    protected:
+        void SaveToDataBase(Account& from, Account& to, int sum) override {
+            throw std::runtime_error("DB error");
+        }
+    };
+
+    MockTransaction mockTr;
+    Account acc1(1, 1000);
+    Account acc2(2, 500);
+    
+    ASSERT_FALSE(mockTr.Make(acc1, acc2, 100));
+    ASSERT_NO_THROW(acc1.Lock()); 
+    ASSERT_NO_THROW(acc2.Lock());
+}
+TEST(TransactionTest, DebitEdgeCaseBalanceEqualsSum) {
+    TransactionTestFriend tr;
+    Account acc(1, 100);
+    acc.Lock();
+    
+    ASSERT_TRUE(tr.TestDebit(acc, 100));
+    ASSERT_EQ(acc.GetBalance(), 0);
 }
