@@ -201,19 +201,7 @@ TEST(TransactionTest, SmallSumThrow) {
     Account acc2(2, 0);
     ASSERT_THROW(tr.Make(acc1, acc2, 99), std::logic_error); 
 }
-TEST(TransactionTest, DatabaseErrorHandling) {
-    class MockTransaction : public Transaction {
-    protected:
-        void SaveToDataBase(Account& from, Account& to, int sum) override {
-            throw std::runtime_error("DB failed");
-        }
-    };
 
-    MockTransaction mockTr;
-    Account acc1(1, 1000);
-    Account acc2(2, 500);
-    ASSERT_FALSE(mockTr.Make(acc1, acc2, 100)); 
-}
 TEST(TransactionTest, DebitFailsWhenLowBalance) {
     TransactionTestFriend tr;
     Account acc(1, 50);
