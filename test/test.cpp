@@ -128,11 +128,6 @@ TEST(TransactionTest, FeeConfiguration) {
     ASSERT_EQ(tr.fee(), 10);
 }
 
-TEST(AccountTest, DoubleLockThrows) {
-    Account acc(1, 100);
-    acc.Lock();
-    ASSERT_THROW(acc.Lock(), std::runtime_error); 
-}
 
 TEST(TransactionTest, DebitInsufficientBalance) {
     TransactionTestFriend tr;
@@ -146,4 +141,32 @@ TEST(TransactionTest, DebitInsufficientBalance) {
 TEST(AccountTest, ChangeBalanceWithoutLock) {
     Account acc(1, 200);
     ASSERT_THROW(acc.ChangeBalance(100), std::runtime_error); 
+}
+
+TEST(TransactionTest, InsufficientBalance) {
+    Transaction tr;
+    Account acc1(1, 100);
+    Account acc2(2, 0);
+
+    ASSERT_FALSE(tr.Make(acc1, acc2, 100));
+}
+
+TEST(TransactionTest, DatabaseExceptionHandling) {
+    class MockTransaction : public Transaction {
+    protected:
+        void SaveToDataBase(Account& from, Account& to, int sum) override {
+            throw std::runtime_error("DB error");
+        }
+    };
+
+    MockTransaction mockTr;
+    Account acc1(1, 1000);
+    Account acc2(2, 500);
+
+    ASSERT_FALSE(mockTr.Make(acc1, acc2, 100));
+}
+TEST(AccountTest, DoubleLockThrows) {
+    Account acc(1, 100);
+    acc.Lock();
+    ASSERT_THROW(acc.Lock(), std::runtime_error);
 }
