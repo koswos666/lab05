@@ -77,8 +77,7 @@ TEST(TransactionTest, SaveToDatabaseException) {
     Transaction tr;
     Account acc1(1, 1000);
     Account acc2(2, 500);
-    acc1.Lock();
-    acc2.Lock();
+    
 
     class MockTransaction : public Transaction {
     protected:
@@ -95,7 +94,6 @@ TEST(TransactionTest, SumBoundary) {
     Transaction tr;
     Account acc1(1, 200);
     Account acc2(2, 0);
-    acc1.Lock();
 
     ASSERT_TRUE(tr.Make(acc1, acc2, 100));
     ASSERT_EQ(acc1.GetBalance(), 99); 
