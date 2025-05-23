@@ -72,3 +72,60 @@ TEST(TransactionTest, CreditDebitChecks) {
 
     ASSERT_FALSE(tr.TestDebit(acc, 150));
 }
+
+TEST(TransactionTest, SaveToDatabaseException) {
+    Transaction tr;
+    Account acc1(1, 1000);
+    Account acc2(2, 500);
+    acc1.Lock();
+    acc2.Lock();
+
+    class MockTransaction : public Transaction {
+    protected:
+        void SaveToDataBase(Account& from, Account& to, int sum) override {
+            throw std::runtime_error("DB error");
+        }
+    };
+
+    MockTransaction mockTr;
+    ASSERT_FALSE(mockTr.Make(acc1, acc2, 100));
+}
+
+TEST(TransactionTest, SumBoundary) {
+    Transaction tr;
+    Account acc1(1, 200);
+    Account acc2(2, 0);
+    acc1.Lock();
+
+    ASSERT_TRUE(tr.Make(acc1, acc2, 100));
+    ASSERT_EQ(acc1.GetBalance(), 99); 
+    ASSERT_EQ(acc2.GetBalance(), 100);
+}
+
+TEST(TransactionTest, DebitFailure) {
+    TransactionTestFriend tr;
+    Account acc(1, 50);
+    acc.Lock();
+    
+    ASSERT_FALSE(tr.TestDebit(acc, 100));
+    ASSERT_EQ(acc.GetBalance(), 50);
+}
+
+TEST(TransactionTest, GuardUnlocksOnException) {
+    Transaction tr;
+    Account acc1(1, 1000);
+    Account acc2(2, 500);
+
+    try {
+        tr.Make(acc1, acc2, 99);
+    } catch (...) {}
+
+    ASSERT_NO_THROW(acc1.Lock()); 
+    ASSERT_NO_THROW(acc2.Lock());
+}
+
+TEST(TransactionTest, FeeConfiguration) {
+    Transaction tr;
+    tr.set_fee(10);
+    ASSERT_EQ(tr.fee(), 10);
+}
