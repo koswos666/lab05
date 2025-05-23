@@ -127,3 +127,23 @@ TEST(TransactionTest, FeeConfiguration) {
     tr.set_fee(10);
     ASSERT_EQ(tr.fee(), 10);
 }
+
+TEST(AccountTest, DoubleLockThrows) {
+    Account acc(1, 100);
+    acc.Lock();
+    ASSERT_THROW(acc.Lock(), std::runtime_error); 
+}
+
+TEST(TransactionTest, DebitInsufficientBalance) {
+    TransactionTestFriend tr;
+    Account acc(1, 50);
+    acc.Lock();
+    
+    ASSERT_FALSE(tr.TestDebit(acc, 100));
+    ASSERT_EQ(acc.GetBalance(), 50);
+}
+
+TEST(AccountTest, ChangeBalanceWithoutLock) {
+    Account acc(1, 200);
+    ASSERT_THROW(acc.ChangeBalance(100), std::runtime_error); 
+}
