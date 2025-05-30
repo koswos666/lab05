@@ -2,6 +2,7 @@
 #include <gmock/gmock.h>
 #include "Account.h"
 #include "Transaction.h"
+#include <sstream> 
 
 using namespace testing;
 
@@ -153,4 +154,10 @@ TEST(TransactionTest, DebitFailsWithRealAccounts) {
     ASSERT_FALSE(tr.Make(from, to, 150));
     ASSERT_EQ(from.GetBalance(), 100); 
     ASSERT_EQ(to.GetBalance(), 0);   
+}
+TEST(TransactionTest, FeeGetterAndSetterWork) {
+    Transaction tr;
+    ASSERT_EQ(tr.fee(), 1);
+    tr.set_fee(5);
+    ASSERT_EQ(tr.fee(), 5);
 }
