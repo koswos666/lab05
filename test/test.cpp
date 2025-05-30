@@ -365,3 +365,88 @@ TEST(AccountTest, ConstructorInitialization) {
     ASSERT_EQ(acc.id(), 42);
     ASSERT_EQ(acc.GetBalance(), 999);
 }
+TEST(TransactionTest, NegativeCredit) {
+    TransactionTestFriend tr;
+    Account acc(1, 100);
+    acc.Lock();
+    ASSERT_THROW(tr.TestCredit(acc, -50), std::invalid_argument);
+}
+
+TEST(TransactionTest, NegativeDebit) {
+    TransactionTestFriend tr;
+    Account acc(1, 100);
+    acc.Lock();
+    ASSERT_THROW(tr.TestDebit(acc, -50), std::invalid_argument);
+}
+
+TEST(TransactionTest, UnlockAfterException) {
+    Account acc(1, 100);
+    ASSERT_NO_THROW(acc.Unlock());
+}
+TEST(TransactionTest, SaveToDatabaseInSuccessCase) {
+    class MockTransaction : public Transaction {
+    public:
+        bool saveCalled = false;
+    protected:
+        void SaveToDataBase(Account& from, Account& to, int sum) override {
+            saveCalled = true;
+            Transaction::SaveToDataBase(from, to, sum);
+        }
+    };
+
+    MockTransaction mockTr;
+    Account acc1(1, 1000);
+    Account acc2(2, 500);
+    
+    ASSERT_TRUE(mockTr.Make(acc1, acc2, 100));
+    ASSERT_TRUE(mockTr.saveCalled);
+}
+TEST(TransactionTest, GuardUnlocksOnInsufficientBalance) {
+    Transaction tr;
+    Account acc1(1, 100);
+    Account acc2(2, 0);
+
+    ASSERT_FALSE(tr.Make(acc1, acc2, 100));
+    ASSERT_NO_THROW(acc1.Lock());
+    ASSERT_NO_THROW(acc2.Lock());
+    acc1.Unlock();
+    acc2.Unlock();
+}
+
+TEST(TransactionTest, FeeChangeAffectsTransaction) {
+    Transaction tr;
+    tr.set_fee(5);
+    Account acc1(1, 200);
+    Account acc2(2, 0);
+
+    ASSERT_TRUE(tr.Make(acc1, acc2, 100));
+    ASSERT_EQ(acc1.GetBalance(), 95);
+}
+TEST(AccountTest, LockUnlockSequence) {
+    Account acc(1, 100);
+    acc.Lock();
+    acc.Unlock();
+    ASSERT_NO_THROW(acc.Lock());
+}
+
+TEST(TransactionTest, DebitExactBalanceAfterFee) {
+    TransactionTestFriend tr;
+    Account acc(1, 101);
+    acc.Lock();
+    ASSERT_TRUE(tr.TestDebit(acc, 101));
+    ASSERT_EQ(acc.GetBalance(), 0);
+}
+
+TEST(TransactionTest, CreditAndDebitWithHighValues) {
+    TransactionTestFriend tr;
+    Account acc(1, 1000000);
+    acc.Lock();
+    tr.TestCredit(acc, 500000);
+    ASSERT_EQ(acc.GetBalance(), 1500000);
+    ASSERT_TRUE(tr.TestDebit(acc, 1000000));
+    ASSERT_EQ(acc.GetBalance(), 500000);
+}
+int main(int argc, char **argv) {
+    ::testing::InitGoogleTest(&argc, argv);
+    return RUN_ALL_TESTS();
+}
