@@ -91,3 +91,48 @@ TEST(TransactionTest, UnlockOrderMaintainedOnFailure) {
 
     ASSERT_FALSE(tr.Make(from, to, 100));
 }
+
+
+TEST(TransactionTest, SaveToDatabaseOutput) {
+    Account from(1, 2000);
+    Account to(2, 500);
+    Transaction tr;
+
+    std::streambuf* old = std::cout.rdbuf();
+    std::stringstream buffer;
+    std::cout.rdbuf(buffer.rdbuf());
+
+    tr.Make(from, to, 300);
+    std::cout.rdbuf(old);
+
+    std::string output = buffer.str();
+    EXPECT_THAT(output, HasSubstr("1 send to 2 $300"));
+    EXPECT_THAT(output, HasSubstr("Balance 1 is 1699"));
+    EXPECT_THAT(output, HasSubstr("Balance 2 is 800"));
+}
+
+TEST(TransactionTest, SetFeeChangesFeeValue) {
+    Transaction tr;
+    tr.set_fee(5);
+    ASSERT_EQ(tr.fee(), 5);
+}
+
+TEST(TransactionTest, SuccessfulTransferWithRealAccounts) {
+    Account from(1, 2000);
+    Account to(2, 500);
+    Transaction tr;
+    
+    ASSERT_TRUE(tr.Make(from, to, 300));
+    ASSERT_EQ(from.GetBalance(), 1699); 
+    ASSERT_EQ(to.GetBalance(), 800);   
+}
+
+TEST(TransactionTest, DebitFailsWithRealAccounts) {
+    Account from(1, 100);
+    Account to(2, 0);
+    Transaction tr;
+    
+    ASSERT_FALSE(tr.Make(from, to, 150));
+    ASSERT_EQ(from.GetBalance(), 100); 
+    ASSERT_EQ(to.GetBalance(), 0);   
+}
