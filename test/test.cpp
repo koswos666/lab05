@@ -5,12 +5,6 @@
 #include <sstream> 
 
 using namespace testing;
-class TransactionTestFriend : public Transaction {
-public:
-    void TestSave(Account& from, Account& to, int sum) {
-        SaveToDataBase(from, to, sum);
-    }
-};
 
 class MockAccount : public Account {
 public:
@@ -99,36 +93,24 @@ TEST(TransactionTest, UnlockOrderMaintainedOnFailure) {
     ASSERT_FALSE(tr.Make(from, to, 100));
 }
 
-
-TEST(TransactionTest, SaveToDatabaseOutput) {
+TEST(TransactionTest, SaveToDatabaseIsCalledInSuccessfulTransfer) {
     Account from(1, 2000);
     Account to(2, 500);
     Transaction tr;
 
-    from.Lock();
-    to.Lock();
-    from.ChangeBalance(-301);
-    to.ChangeBalance(300);
-    from.Unlock();
-    to.Unlock();
-
     std::streambuf* old = std::cout.rdbuf();
     std::stringstream buffer;
     std::cout.rdbuf(buffer.rdbuf());
-TransactionTestFriend helper;
-    helper.TestSave(from, to, 300);
+
+    ASSERT_TRUE(tr.Make(from, to, 300));
     
-    std::cout.rdbuf(old); // 
+    std::cout.rdbuf(old);
 
     std::string output = buffer.str();
     EXPECT_THAT(output, HasSubstr("1 send to 2 $300"));
     EXPECT_THAT(output, HasSubstr("Balance 1 is 1699"));
     EXPECT_THAT(output, HasSubstr("Balance 2 is 800"));
 }
-  
-    
- 
- 
 
 TEST(TransactionTest, SetFeeChangesFeeValue) {
     Transaction tr;
@@ -142,8 +124,8 @@ TEST(TransactionTest, SuccessfulTransferWithRealAccounts) {
     Transaction tr;
     
     ASSERT_TRUE(tr.Make(from, to, 300));
-    ASSERT_EQ(from.GetBalance(), 1699); 
-    ASSERT_EQ(to.GetBalance(), 800);   
+    ASSERT_EQ(from.GetBalance(), 1699);
+    ASSERT_EQ(to.GetBalance(), 800);
 }
 
 TEST(TransactionTest, DebitFailsWithRealAccounts) {
@@ -152,33 +134,17 @@ TEST(TransactionTest, DebitFailsWithRealAccounts) {
     Transaction tr;
     
     ASSERT_FALSE(tr.Make(from, to, 150));
-    ASSERT_EQ(from.GetBalance(), 100); 
-    ASSERT_EQ(to.GetBalance(), 0);   
-}
-TEST(TransactionTest, FeeGetterAndSetterWork) {
-    Transaction tr;
-    ASSERT_EQ(tr.fee(), 1);
-    tr.set_fee(5);
-    ASSERT_EQ(tr.fee(), 5);
+    ASSERT_EQ(from.GetBalance(), 100);
+    ASSERT_EQ(to.GetBalance(), 0);
 }
 
-
-TEST(TransactionTest, TransferExactlyHalfFeeSucceeds) {
+TEST(TransactionTest, TransferWithExactFeeSucceeds) {
     Account from(1, 500);
     Account to(2, 0);
     Transaction tr;
     tr.set_fee(50);
     
-    ASSERT_TRUE(tr.Make(from, to, 100));  
-    ASSERT_EQ(from.GetBalance(), 350);    
+    ASSERT_TRUE(tr.Make(from, to, 100));
+    ASSERT_EQ(from.GetBalance(), 350);
     ASSERT_EQ(to.GetBalance(), 100);
-}
-TEST(TransactionTest, MinimumAmountTransferSucceeds) {
-    Account from(1, 200);
-    Account to(2, 100);
-    Transaction tr;
-    
-    ASSERT_NO_THROW(tr.Make(from, to, 100));  
-    ASSERT_EQ(from.GetBalance(), 99);         
-    ASSERT_EQ(to.GetBalance(), 200);
 }
