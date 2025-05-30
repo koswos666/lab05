@@ -7,6 +7,7 @@ using ::testing::_;
 using ::testing::Return;
 using ::testing::Throw;
 using ::testing::StrictMock;
+using ::testing::InSequence;
 
 // Мок-класс для Account
 class MockAccount : public Account {
@@ -72,12 +73,15 @@ TEST(TransactionTest, MakeSuccessfulTransaction) {
     StrictMock<MockAccount> to(2, 0);
     MockTransaction tr;
     
+    InSequence seq; // Важен порядок вызовов
+    
     EXPECT_CALL(from, Lock());
     EXPECT_CALL(to, Lock());
     EXPECT_CALL(from, GetBalance()).WillOnce(Return(200)); // Проверка в Make()
     EXPECT_CALL(tr, SaveToDataBase(_, _, 100));
-    EXPECT_CALL(to, ChangeBalance(100)); // Зачисление
-    EXPECT_CALL(from, ChangeBalance(-101)); // Списание + комиссия
+    EXPECT_CALL(from, GetBalance()).WillOnce(Return(200)); // Проверка в Debit()
+    EXPECT_CALL(to, ChangeBalance(100));
+    EXPECT_CALL(from, ChangeBalance(-101));
     EXPECT_CALL(from, Unlock());
     EXPECT_CALL(to, Unlock());
     
