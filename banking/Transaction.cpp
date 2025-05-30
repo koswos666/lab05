@@ -12,7 +12,7 @@ namespace {
     private:
         Account* account_;
     };
-} // namespace
+} 
 
 Transaction::Transaction() : fee_(1) {}
 Transaction::~Transaction() = default;
@@ -23,7 +23,7 @@ bool Transaction::Make(Account& from, Account& to, int sum) {
     if (fee_ * 2 > sum) return false;
     if (sum < 100) throw std::logic_error("too small");
 
-    { // Блок с Guard
+    { 
         Guard guard_from(from);
         Guard guard_to(to);
 
@@ -31,7 +31,7 @@ bool Transaction::Make(Account& from, Account& to, int sum) {
             return false;
         }
         Credit(to, sum);
-    } // Конец блока
+    } 
 
     SaveToDataBase(from, to, sum);
     return true;
@@ -49,7 +49,9 @@ bool Transaction::Debit(Account& account, int sum) {
     return false;
 }
 void Transaction::SaveToDataBase(Account& from, Account& to, int sum) {
-  std::cout << from.id() << " send to " << to.id() << " $" << sum << std::endl;
-  std::cout << "Balance " << from.id() << " is " << from.GetBalance() << std::endl;
-  std::cout << "Balance " << to.id() << " is " << to.GetBalance() << std::endl;
+    
+    fprintf(stdout, "%d send to %d $%d\n", from.id(), to.id(), sum);
+    fprintf(stdout, "Balance %d is %d\n", from.id(), from.GetBalance());
+    fprintf(stdout, "Balance %d is %d\n", to.id(), to.GetBalance());
+    fflush(stdout); 
 }
