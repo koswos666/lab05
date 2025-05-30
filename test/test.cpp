@@ -98,11 +98,29 @@ TEST(TransactionTest, SaveToDatabaseOutput) {
     Account to(2, 500);
     Transaction tr;
 
+    from.Lock();
+    to.Lock();
+    from.ChangeBalance(-301);
+    to.ChangeBalance(300);
+    from.Unlock();
+    to.Unlock();
+
+    
     std::streambuf* old = std::cout.rdbuf();
     std::stringstream buffer;
     std::cout.rdbuf(buffer.rdbuf());
 
-    tr.Make(from, to, 300);
+    
+    class TransactionTestFriend : public Transaction {
+    public:
+        void TestSave(Account& from, Account& to, int sum) {
+            SaveToDataBase(from, to, sum);
+        }
+    };
+    
+    TransactionTestFriend helper;
+    helper.TestSave(from, to, 300);
+    
     std::cout.rdbuf(old);
 
     std::string output = buffer.str();
