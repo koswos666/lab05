@@ -7,9 +7,8 @@ using ::testing::_;
 using ::testing::Return;
 using ::testing::Throw;
 using ::testing::StrictMock;
-using ::testing::AtLeast;
 
-
+// Мок-класс для Account
 class MockAccount : public Account {
 public:
     MockAccount(int id, int balance) : Account(id, balance) {}
@@ -19,7 +18,7 @@ public:
     MOCK_METHOD(void, Unlock, (), (override));
 };
 
-// Мок-класс для Transaction (для перехвата SaveToDataBase)
+// Мок-класс для Transaction
 class MockTransaction : public Transaction {
 public:
     MOCK_METHOD(void, SaveToDataBase, (Account& from, Account& to, int sum), (override));
@@ -47,10 +46,11 @@ TEST(AccountTest, LockThrowsWhenAlreadyLocked) {
 TEST(TransactionTest, MakeFailsOnInvalidAccounts) {
     Transaction tr;
     Account acc1(1, 100), acc2(1, 200);
+    Account acc3(2, 300); // Фиксированный аккаунт для тестов
     
-    EXPECT_THROW(tr.Make(acc1, acc2, 100), std::logic_error); // Same ID
-    EXPECT_THROW(tr.Make(acc1, Account(2, 200), -50), std::invalid_argument); // Negative sum
-    EXPECT_THROW(tr.Make(acc1, Account(2, 200), 99), std::logic_error); // Sum < 100
+    EXPECT_THROW(tr.Make(acc1, acc2, 100), std::logic_error);
+    EXPECT_THROW(tr.Make(acc1, acc3, -50), std::invalid_argument);
+    EXPECT_THROW(tr.Make(acc1, acc3, 99), std::logic_error);
 }
 
 TEST(TransactionTest, MakeFailsWhenInsufficientFunds) {
@@ -64,7 +64,7 @@ TEST(TransactionTest, MakeFailsWhenInsufficientFunds) {
     EXPECT_CALL(to, Unlock());
     
     Transaction tr;
-    EXPECT_FALSE(tr.Make(from, to, 100)); // Нужно 100 + 1(fee) = 101
+    EXPECT_FALSE(tr.Make(from, to, 100));
 }
 
 TEST(TransactionTest, MakeSuccessfulTransaction) {
@@ -72,13 +72,12 @@ TEST(TransactionTest, MakeSuccessfulTransaction) {
     StrictMock<MockAccount> to(2, 0);
     MockTransaction tr;
     
-    // Ожидаемые вызовы
     EXPECT_CALL(from, Lock());
     EXPECT_CALL(to, Lock());
     EXPECT_CALL(from, GetBalance()).WillOnce(Return(200));
     EXPECT_CALL(tr, SaveToDataBase(_, _, 100));
-    EXPECT_CALL(to, ChangeBalance(100)); // Зачисление
-    EXPECT_CALL(from, ChangeBalance(-101)); // Списание + комиссия
+    EXPECT_CALL(to, ChangeBalance(100));
+    EXPECT_CALL(from, ChangeBalance(-101));
     EXPECT_CALL(from, Unlock());
     EXPECT_CALL(to, Unlock());
     
@@ -100,7 +99,7 @@ TEST(TransactionTest, MakeFailsWhenDatabaseThrows) {
     EXPECT_FALSE(tr.Make(from, to, 100));
 }
 
-// Тестирование приватных методов через дружественный класс
+// Тестирование приватных методов
 class TransactionTestFriend {
 public:
     static void Credit(Transaction& tr, Account& acc, int sum) {
@@ -116,18 +115,14 @@ TEST(TransactionTest, CreditAndDebitOperations) {
     Account acc(1, 100);
     acc.Lock();
     
-    // Тест Credit
     TransactionTestFriend::Credit(tr, acc, 50);
     EXPECT_EQ(acc.GetBalance(), 150);
     
-    // Тест Debit (успех)
     EXPECT_TRUE(TransactionTestFriend::Debit(tr, acc, 50));
     EXPECT_EQ(acc.GetBalance(), 100);
     
-    // Тест Debit (недостаточно средств)
     EXPECT_FALSE(TransactionTestFriend::Debit(tr, acc, 150));
     
-    // Тест исключений
     EXPECT_THROW(TransactionTestFriend::Credit(tr, acc, -10), std::invalid_argument);
     EXPECT_THROW(TransactionTestFriend::Debit(tr, acc, -10), std::invalid_argument);
 }
