@@ -5,6 +5,12 @@
 #include <sstream> 
 
 using namespace testing;
+class TransactionTestFriend : public Transaction {
+public:
+    void TestSave(Account& from, Account& to, int sum) {
+        SaveToDataBase(from, to, sum);
+    }
+};
 
 class MockAccount : public Account {
 public:
@@ -99,7 +105,6 @@ TEST(TransactionTest, SaveToDatabaseOutput) {
     Account to(2, 500);
     Transaction tr;
 
-   
     from.Lock();
     to.Lock();
     from.ChangeBalance(-301);
@@ -107,41 +112,23 @@ TEST(TransactionTest, SaveToDatabaseOutput) {
     from.Unlock();
     to.Unlock();
 
-   
     std::streambuf* old = std::cout.rdbuf();
     std::stringstream buffer;
     std::cout.rdbuf(buffer.rdbuf());
-
-   
-    class TransactionTestFriend : public Transaction {
-    public:
-        void TestSave(Account& from, Account& to, int sum) {
-            SaveToDataBase(from, to, sum);
-        }
-    };
-    
-    TransactionTestFriend helper;
+TransactionTestFriend helper;
     helper.TestSave(from, to, 300);
     
-    // Восстанавливаем stdout
-    std::cout.rdbuf(old);
+    std::cout.rdbuf(old); // 
 
     std::string output = buffer.str();
     EXPECT_THAT(output, HasSubstr("1 send to 2 $300"));
     EXPECT_THAT(output, HasSubstr("Balance 1 is 1699"));
     EXPECT_THAT(output, HasSubstr("Balance 2 is 800"));
 }
+  
     
-    TransactionTestFriend helper;
-    helper.TestSave(from, to, 300);
-    
-    std::cout.rdbuf(old);
-
-    std::string output = buffer.str();
-    EXPECT_THAT(output, HasSubstr("1 send to 2 $300"));
-    EXPECT_THAT(output, HasSubstr("Balance 1 is 1699"));
-    EXPECT_THAT(output, HasSubstr("Balance 2 is 800"));
-}
+ 
+ 
 
 TEST(TransactionTest, SetFeeChangesFeeValue) {
     Transaction tr;
@@ -178,7 +165,7 @@ TEST(TransactionTest, GuardLocksAndUnlocksAutomatically) {
     Account acc(1, 100);
     
     {
-        ::Guard guard(acc);  
+        Transaction::Guard guard(acc);  
         ASSERT_THROW(acc.Lock(), std::runtime_error);
     }
     
