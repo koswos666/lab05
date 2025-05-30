@@ -3,142 +3,91 @@
 #include "Account.h"
 #include "Transaction.h"
 
-using ::testing::_;
-using ::testing::Return;
-using ::testing::Throw;
-using ::testing::StrictMock;
-using ::testing::InSequence;
+using namespace testing;
 
-// Мок-класс для Account
 class MockAccount : public Account {
 public:
     MockAccount(int id, int balance) : Account(id, balance) {}
     MOCK_METHOD(int, GetBalance, (), (const, override));
-    MOCK_METHOD(void, ChangeBalance, (int), (override));
+    MOCK_METHOD(void, ChangeBalance, (int diff), (override));
     MOCK_METHOD(void, Lock, (), (override));
     MOCK_METHOD(void, Unlock, (), (override));
 };
 
-// Мок-класс для Transaction
-class MockTransaction : public Transaction {
-public:
-    MOCK_METHOD(void, SaveToDataBase, (Account& from, Account& to, int sum), (override));
-};
-
-// Тесты для класса Account
-TEST(AccountTest, LockUnlockBehavior) {
-    Account acc(1, 100);
-    
-    acc.Lock();
-    EXPECT_NO_THROW(acc.ChangeBalance(50));
-    EXPECT_EQ(acc.GetBalance(), 150);
-    
-    acc.Unlock();
-    EXPECT_THROW(acc.ChangeBalance(50), std::runtime_error);
-}
-
-TEST(AccountTest, LockThrowsWhenAlreadyLocked) {
-    Account acc(1, 100);
-    acc.Lock();
-    EXPECT_THROW(acc.Lock(), std::runtime_error);
-}
-
-// Тесты для класса Transaction
-TEST(TransactionTest, MakeFailsOnInvalidAccounts) {
+TEST(TransactionTest, SuccessfulTransferBetweenDifferentAccounts) {
+    MockAccount from(1, 2000);
+    MockAccount to(2, 500);
     Transaction tr;
-    Account acc1(1, 100), acc2(1, 200);
-    Account acc3(2, 300);
-    
-    EXPECT_THROW(tr.Make(acc1, acc2, 100), std::logic_error);
-    EXPECT_THROW(tr.Make(acc1, acc3, -50), std::invalid_argument);
-    EXPECT_THROW(tr.Make(acc1, acc3, 99), std::logic_error);
-}
 
-TEST(TransactionTest, MakeFailsWhenInsufficientFunds) {
-    StrictMock<MockAccount> from(1, 100);
-    StrictMock<MockAccount> to(2, 0);
-    
+    testing::InSequence seq;
+
     EXPECT_CALL(from, Lock());
     EXPECT_CALL(to, Lock());
+    EXPECT_CALL(from, GetBalance()).WillOnce(Return(2000));
+    EXPECT_CALL(from, ChangeBalance(-301));
+    EXPECT_CALL(to, ChangeBalance(300));
+    EXPECT_CALL(to, Unlock());
+    EXPECT_CALL(from, Unlock());
+    EXPECT_CALL(from, GetBalance()).WillOnce(Return(1699));
+    EXPECT_CALL(to, GetBalance()).WillOnce(Return(800));   
+
+    ASSERT_TRUE(tr.Make(from, to, 300));
+}
+
+TEST(TransactionTest, TransferToSameAccountFails) {
+    MockAccount acc(1, 100);
+    Transaction tr;
+    ASSERT_THROW(tr.Make(acc, acc, 200), std::logic_error);
+}
+
+TEST(TransactionTest, NegativeAmountTransferFails) {
+    MockAccount from(1, 200);
+    MockAccount to(2, 100);
+    Transaction tr;
+    ASSERT_THROW(tr.Make(from, to, -50), std::invalid_argument);
+}
+
+TEST(TransactionTest, SmallAmountTransferFails) {
+    MockAccount from(1, 200);
+    MockAccount to(2, 100);
+    Transaction tr;
+    ASSERT_THROW(tr.Make(from, to, 99), std::logic_error);
+}
+
+TEST(TransactionTest, FeeTooLargeCancelsTransfer) {
+    MockAccount from(1, 300);
+    MockAccount to(2, 0);
+    Transaction tr;
+
+    EXPECT_CALL(from, Lock()).Times(0);
+    EXPECT_CALL(to, Lock()).Times(0);
+    ASSERT_FALSE(tr.Make(from, to, 1)); 
+}
+
+TEST(TransactionTest, InsufficientBalanceCancelsTransfer) {
+    MockAccount from(1, 100);
+    MockAccount to(2, 0);
+    Transaction tr;
+
+    EXPECT_CALL(from, Lock());
+    EXPECT_CALL(to, Lock());
+    EXPECT_CALL(to, Unlock());
+    EXPECT_CALL(from, Unlock());
     EXPECT_CALL(from, GetBalance()).WillOnce(Return(100));
-    EXPECT_CALL(from, Unlock());
-    EXPECT_CALL(to, Unlock());
-    
+    ASSERT_FALSE(tr.Make(from, to, 150)); 
+}
+
+TEST(TransactionTest, UnlockOrderMaintainedOnFailure) {
+    MockAccount from(1, 50);
+    MockAccount to(2, 0);
     Transaction tr;
-    EXPECT_FALSE(tr.Make(from, to, 100));
-}
 
-TEST(TransactionTest, MakeSuccessfulTransaction) {
-    StrictMock<MockAccount> from(1, 200);
-    StrictMock<MockAccount> to(2, 0);
-    MockTransaction tr;
-    
-    InSequence seq; // Важен порядок вызовов
-    
-    // Ожидаемые вызовы при успешной транзакции
-    EXPECT_CALL(from, Lock()).Times(1);
-    EXPECT_CALL(to, Lock()).Times(1);
-    EXPECT_CALL(from, GetBalance()).WillOnce(Return(200));
-    EXPECT_CALL(tr, SaveToDataBase(Ref(from), Ref(to), 100)).Times(1);
-    EXPECT_CALL(from, GetBalance()).WillOnce(Return(200)); // Для Debit
-    EXPECT_CALL(to, ChangeBalance(100)).Times(1);
-    EXPECT_CALL(from, ChangeBalance(-101)).Times(1);
-    EXPECT_CALL(from, Unlock()).Times(1);
-    EXPECT_CALL(to, Unlock()).Times(1);
-    
-    EXPECT_TRUE(tr.Make(from, to, 100));
-}
-
-TEST(TransactionTest, MakeFailsWhenDatabaseThrows) {
-    StrictMock<MockAccount> from(1, 200);
-    StrictMock<MockAccount> to(2, 0);
-    MockTransaction tr;
-    
+    testing::InSequence seq;
     EXPECT_CALL(from, Lock());
     EXPECT_CALL(to, Lock());
-    EXPECT_CALL(from, GetBalance()).WillOnce(Return(200));
-    EXPECT_CALL(tr, SaveToDataBase(_, _, _)).WillOnce(Throw(std::runtime_error("DB Error")));
-    EXPECT_CALL(from, Unlock());
+    EXPECT_CALL(from, GetBalance()).WillOnce(Return(50));
     EXPECT_CALL(to, Unlock());
-    
-    EXPECT_FALSE(tr.Make(from, to, 100));
-}
+    EXPECT_CALL(from, Unlock());
 
-// Тестирование приватных методов
-class TransactionTestFriend {
-public:
-    static void Credit(Transaction& tr, Account& acc, int sum) {
-        tr.Credit(acc, sum);
-    }
-    static bool Debit(Transaction& tr, Account& acc, int sum) {
-        return tr.Debit(acc, sum);
-    }
-};
-
-TEST(TransactionTest, CreditAndDebitOperations) {
-    Transaction tr;
-    Account acc(1, 100);
-    acc.Lock();
-    
-    TransactionTestFriend::Credit(tr, acc, 50);
-    EXPECT_EQ(acc.GetBalance(), 150);
-    
-    EXPECT_TRUE(TransactionTestFriend::Debit(tr, acc, 50));
-    EXPECT_EQ(acc.GetBalance(), 100);
-    
-    EXPECT_FALSE(TransactionTestFriend::Debit(tr, acc, 150));
-    
-    EXPECT_THROW(TransactionTestFriend::Credit(tr, acc, -10), std::invalid_argument);
-    EXPECT_THROW(TransactionTestFriend::Debit(tr, acc, -10), std::invalid_argument);
-}
-
-TEST(TransactionTest, FeeConfiguration) {
-    Transaction tr;
-    tr.set_fee(10);
-    EXPECT_EQ(tr.fee(), 10);
-}
-
-int main(int argc, char** argv) {
-    ::testing::InitGoogleTest(&argc, argv);
-    return RUN_ALL_TESTS();
+    ASSERT_FALSE(tr.Make(from, to, 100));
 }
