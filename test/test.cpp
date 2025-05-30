@@ -99,6 +99,7 @@ TEST(TransactionTest, SaveToDatabaseOutput) {
     Account to(2, 500);
     Transaction tr;
 
+   
     from.Lock();
     to.Lock();
     from.ChangeBalance(-301);
@@ -106,18 +107,30 @@ TEST(TransactionTest, SaveToDatabaseOutput) {
     from.Unlock();
     to.Unlock();
 
-    
+   
     std::streambuf* old = std::cout.rdbuf();
     std::stringstream buffer;
     std::cout.rdbuf(buffer.rdbuf());
 
-    
+   
     class TransactionTestFriend : public Transaction {
     public:
         void TestSave(Account& from, Account& to, int sum) {
             SaveToDataBase(from, to, sum);
         }
     };
+    
+    TransactionTestFriend helper;
+    helper.TestSave(from, to, 300);
+    
+    // Восстанавливаем stdout
+    std::cout.rdbuf(old);
+
+    std::string output = buffer.str();
+    EXPECT_THAT(output, HasSubstr("1 send to 2 $300"));
+    EXPECT_THAT(output, HasSubstr("Balance 1 is 1699"));
+    EXPECT_THAT(output, HasSubstr("Balance 2 is 800"));
+}
     
     TransactionTestFriend helper;
     helper.TestSave(from, to, 300);
@@ -160,4 +173,34 @@ TEST(TransactionTest, FeeGetterAndSetterWork) {
     ASSERT_EQ(tr.fee(), 1);
     tr.set_fee(5);
     ASSERT_EQ(tr.fee(), 5);
+}
+TEST(TransactionTest, GuardLocksAndUnlocksAutomatically) {
+    Account acc(1, 100);
+    
+    {
+        ::Guard guard(acc);  
+        ASSERT_THROW(acc.Lock(), std::runtime_error);
+    }
+    
+    ASSERT_NO_THROW(acc.Lock());
+    acc.Unlock();
+}
+TEST(TransactionTest, TransferExactlyHalfFeeSucceeds) {
+    Account from(1, 500);
+    Account to(2, 0);
+    Transaction tr;
+    tr.set_fee(50);
+    
+    ASSERT_TRUE(tr.Make(from, to, 100));  
+    ASSERT_EQ(from.GetBalance(), 350);    
+    ASSERT_EQ(to.GetBalance(), 100);
+}
+TEST(TransactionTest, MinimumAmountTransferSucceeds) {
+    Account from(1, 200);
+    Account to(2, 100);
+    Transaction tr;
+    
+    ASSERT_NO_THROW(tr.Make(from, to, 100));  
+    ASSERT_EQ(from.GetBalance(), 99);         
+    ASSERT_EQ(to.GetBalance(), 200);
 }
