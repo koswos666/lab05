@@ -24,6 +24,10 @@ TEST(AccountTest, UnlockUnlockedAccountSucceeds) {
     Account acc(1, 100);
     ASSERT_NO_THROW(acc.Unlock());
 }
+TEST(AccountTest, GetIdReturnsCorrectValue) {
+    Account acc(42, 100);
+    ASSERT_EQ(acc.id(), 42);
+}
 
 TEST(AccountTest, UnlockedBalanceChangeThrows) {
     Account acc(1, 100);
