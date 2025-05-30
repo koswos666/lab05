@@ -223,6 +223,7 @@ TEST(TransactionTest, SaveToDatabaseCalledCorrectly) {
     protected:
         void SaveToDataBase(Account& from, Account& to, int sum) override {
             called = true;
+            Transaction::SaveToDataBase(from, to, sum);
         }
     public:
         bool called = false;
@@ -233,7 +234,7 @@ TEST(TransactionTest, SaveToDatabaseCalledCorrectly) {
     Account acc2(2, 500);
     
     ASSERT_TRUE(mockTr.Make(acc1, acc2, 100));
-    ASSERT_TRUE(mockTr.called); 
+    ASSERT_TRUE(mockTr.called);
 }
 TEST(TransactionTest, GuardUnlocksOnDatabaseException) {
     class MockTransaction : public Transaction {
@@ -275,4 +276,51 @@ TEST(TransactionTest, BalanceExactlySumPlusFee) {
     Account acc2(2, 0);
     ASSERT_TRUE(tr.Make(acc1, acc2, 100));
     ASSERT_EQ(acc1.GetBalance(), 0); 
+}
+TEST(AccountTest, UnlockDoesNotThrowWhenUnlocked) {
+    Account acc(1, 100);
+    ASSERT_NO_THROW(acc.Unlock());
+}
+TEST(AccountTest, GetBalanceReturnsCorrectValue) {
+    Account acc(1, 200);
+    ASSERT_EQ(acc.GetBalance(), 200);
+}
+TEST(TransactionTest, BalanceExactlySumPlusFee) {
+    Transaction tr;
+    Account acc1(1, 101); 
+    Account acc2(2, 0);
+    ASSERT_TRUE(tr.Make(acc1, acc2, 100));
+    ASSERT_EQ(acc1.GetBalance(), 0);
+}
+TEST(TransactionTest, GuardUnlockOrder) {
+    class MockAccount : public Account {
+    public:
+        MockAccount(int id, int balance) : Account(id, balance) {}
+        void Unlock() override {
+            static bool toUnlocked = false;
+            if (id() == 2) toUnlocked = true;
+            if (id() == 1 && !toUnlocked) {
+                ADD_FAILURE() << "from unlocked before to!";
+            }
+            Account::Unlock();
+        }
+    };
+
+    MockAccount acc1(1, 1000);
+    MockAccount acc2(2, 500);
+    Transaction tr;
+    tr.Make(acc1, acc2, 100);
+}
+TEST(TransactionTest, FeeGetter) {
+    Transaction tr;
+    ASSERT_EQ(tr.fee(), 1);
+}
+TEST(TransactionTest, SaveToDatabaseOutput) {
+    testing::internal::CaptureStdout();
+    Transaction tr;
+    Account acc1(1, 1000);
+    Account acc2(2, 500);
+    tr.Make(acc1, acc2, 100);
+    std::string output = testing::internal::GetCapturedStdout();
+    ASSERT_EQ(output, "1 send to 2 $100\n");
 }
