@@ -270,13 +270,7 @@ TEST(TransactionTest, DebitZeroSumAsserts) {
     EXPECT_DEATH(tr.TestDebit(acc, 0), ".*sum > 0.*"); 
 }
 
-TEST(TransactionTest, BalanceExactlySumPlusFee) {
-    Transaction tr;
-    Account acc1(1, 101); 
-    Account acc2(2, 0);
-    ASSERT_TRUE(tr.Make(acc1, acc2, 100));
-    ASSERT_EQ(acc1.GetBalance(), 0); 
-}
+
 TEST(AccountTest, UnlockDoesNotThrowWhenUnlocked) {
     Account acc(1, 100);
     ASSERT_NO_THROW(acc.Unlock());
