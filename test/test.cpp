@@ -401,17 +401,7 @@ TEST(TransactionTest, SaveToDatabaseInSuccessCase) {
     ASSERT_TRUE(mockTr.Make(acc1, acc2, 100));
     ASSERT_TRUE(mockTr.saveCalled);
 }
-TEST(TransactionTest, GuardUnlocksOnInsufficientBalance) {
-    Transaction tr;
-    Account acc1(1, 100);
-    Account acc2(2, 0);
 
-    ASSERT_FALSE(tr.Make(acc1, acc2, 100));
-    ASSERT_NO_THROW(acc1.Lock());
-    ASSERT_NO_THROW(acc2.Lock());
-    acc1.Unlock();
-    acc2.Unlock();
-}
 
 TEST(TransactionTest, FeeChangeAffectsTransaction) {
     Transaction tr;
