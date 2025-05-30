@@ -46,7 +46,7 @@ TEST(AccountTest, LockThrowsWhenAlreadyLocked) {
 TEST(TransactionTest, MakeFailsOnInvalidAccounts) {
     Transaction tr;
     Account acc1(1, 100), acc2(1, 200);
-    Account acc3(2, 300); // Фиксированный аккаунт для тестов
+    Account acc3(2, 300);
     
     EXPECT_THROW(tr.Make(acc1, acc2, 100), std::logic_error);
     EXPECT_THROW(tr.Make(acc1, acc3, -50), std::invalid_argument);
@@ -74,8 +74,9 @@ TEST(TransactionTest, MakeSuccessfulTransaction) {
     
     EXPECT_CALL(from, Lock());
     EXPECT_CALL(to, Lock());
-    EXPECT_CALL(from, GetBalance()).WillOnce(Return(200));
+    EXPECT_CALL(from, GetBalance()).WillOnce(Return(200)); // Проверка баланса в Make()
     EXPECT_CALL(tr, SaveToDataBase(_, _, 100));
+    EXPECT_CALL(from, GetBalance()).WillOnce(Return(200)); // Дополнительная проверка в Debit()
     EXPECT_CALL(to, ChangeBalance(100));
     EXPECT_CALL(from, ChangeBalance(-101));
     EXPECT_CALL(from, Unlock());
