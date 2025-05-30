@@ -209,12 +209,11 @@ TEST(TransactionTest, DebitFailsWhenLowBalance) {
     ASSERT_FALSE(tr.TestDebit(acc, 100)); 
     ASSERT_EQ(acc.GetBalance(), 50);
 }
-TEST(TransactionTest, CreditZeroSumAsserts) {
+TEST(TransactionTest, CreditZeroSumThrows) {
     TransactionTestFriend tr;
     Account acc(1, 100);
     acc.Lock();
-    
-    EXPECT_DEATH(tr.TestCredit(acc, 0), ".*sum > 0.*");
+    ASSERT_THROW(tr.TestCredit(acc, 0), std::invalid_argument);
 }
 
 
@@ -263,11 +262,11 @@ TEST(TransactionTest, DebitEdgeCaseBalanceEqualsSum) {
 
 
 
-TEST(TransactionTest, DebitZeroSumAsserts) {
+TEST(TransactionTest, DebitZeroSumThrows) {
     TransactionTestFriend tr;
     Account acc(1, 100);
     acc.Lock();
-    EXPECT_DEATH(tr.TestDebit(acc, 0), ".*sum > 0.*"); 
+    ASSERT_THROW(tr.TestDebit(acc, 0), std::invalid_argument);
 }
 
 
@@ -317,4 +316,52 @@ TEST(TransactionTest, SaveToDatabaseOutput) {
     tr.Make(acc1, acc2, 100);
     std::string output = testing::internal::GetCapturedStdout();
     ASSERT_EQ(output, "1 send to 2 $100\n");
+}
+
+TEST(TransactionTest, GuardUnlocksOnInsufficientBalance) {
+    Transaction tr;
+    Account acc1(1, 100); 
+    Account acc2(2, 0);
+
+    ASSERT_FALSE(tr.Make(acc1, acc2, 100));
+    ASSERT_NO_THROW(acc1.Lock());
+    ASSERT_NO_THROW(acc2.Lock());
+    acc1.Unlock();
+    acc2.Unlock();
+}
+
+TEST(TransactionTest, GuardUnlocksOnSuccess) {
+    Transaction tr;
+    Account acc1(1, 200);
+    Account acc2(2, 0);
+
+    ASSERT_TRUE(tr.Make(acc1, acc2, 100));
+    ASSERT_NO_THROW(acc1.Lock());
+    ASSERT_NO_THROW(acc2.Lock());
+    acc1.Unlock();
+    acc2.Unlock();
+}
+
+
+TEST(TransactionTest, CreditDebitInvalidSum) {
+    TransactionTestFriend tr;
+    Account acc(1, 100);
+    acc.Lock();
+    
+    ASSERT_THROW(tr.TestCredit(acc, -50), std::invalid_argument);
+    ASSERT_THROW(tr.TestDebit(acc, -50), std::invalid_argument);
+    ASSERT_THROW(tr.TestCredit(acc, 0), std::invalid_argument);
+    ASSERT_THROW(tr.TestDebit(acc, 0), std::invalid_argument);
+}
+
+
+TEST(AccountTest, ChangeBalanceThrowsWhenNotLocked) {
+    Account acc(1, 100);
+    ASSERT_THROW(acc.ChangeBalance(50), std::runtime_error);
+}
+
+TEST(AccountTest, ConstructorInitialization) {
+    Account acc(42, 999);
+    ASSERT_EQ(acc.id(), 42);
+    ASSERT_EQ(acc.GetBalance(), 999);
 }
