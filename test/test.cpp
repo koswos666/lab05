@@ -20,36 +20,33 @@ TEST(TransactionTest, FullTransferFlow) {
     MockAccount to(2, 500);
     Transaction tr;
 
-    // Перенаправляем cout
-    std::streambuf* old = std::cout.rdbuf();
-    std::stringstream buffer;
-    std::cout.rdbuf(buffer.rdbuf());
-
-    // Установка ожиданий
-    {
-        InSequence seq;
-        
-        // Проверка блокировки
-        EXPECT_CALL(from, Lock());
-        EXPECT_CALL(to, Lock());
-        
-        // Проверка изменения баланса
-        EXPECT_CALL(from, GetBalance()).WillOnce(Return(2000));
-        EXPECT_CALL(from, ChangeBalance(-301));
-        EXPECT_CALL(to, ChangeBalance(300));
-        
-        // Проверка разблокировки
-        EXPECT_CALL(to, Unlock());
-        EXPECT_CALL(from, Unlock());
-    }
-
-    // Ожидания для SaveToDataBase
+    // Установка ожиданий в строгой последовательности
+    InSequence seq;
+    
+    // Блокировка
+    EXPECT_CALL(from, Lock());
+    EXPECT_CALL(to, Lock());
+    
+    // Проверка баланса и изменение
+    EXPECT_CALL(from, GetBalance()).WillOnce(Return(2000));
+    EXPECT_CALL(from, ChangeBalance(-301));
+    EXPECT_CALL(to, ChangeBalance(300));
+    
+    // Разблокировка
+    EXPECT_CALL(to, Unlock());
+    EXPECT_CALL(from, Unlock());
+    
+    // Вызовы в SaveToDataBase
     EXPECT_CALL(from, GetBalance()).WillOnce(Return(1699));
     EXPECT_CALL(to, GetBalance()).WillOnce(Return(800));
 
+    // Перенаправляем и восстанавливаем cout
+    std::streambuf* old = std::cout.rdbuf();
+    std::stringstream buffer;
+    std::cout.rdbuf(buffer.rdbuf());
+    
     ASSERT_TRUE(tr.Make(from, to, 300));
     
-    // Восстанавливаем cout
     std::cout.rdbuf(old);
 }
 
@@ -75,14 +72,12 @@ TEST(TransactionTest, InsufficientBalanceHandling) {
     MockAccount to(2, 0);
     Transaction tr;
 
-    {
-        InSequence seq;
-        EXPECT_CALL(from, Lock());
-        EXPECT_CALL(to, Lock());
-        EXPECT_CALL(from, GetBalance()).WillOnce(Return(100));
-        EXPECT_CALL(to, Unlock());
-        EXPECT_CALL(from, Unlock());
-    }
+    InSequence seq;
+    EXPECT_CALL(from, Lock());
+    EXPECT_CALL(to, Lock());
+    EXPECT_CALL(from, GetBalance()).WillOnce(Return(100));
+    EXPECT_CALL(to, Unlock());
+    EXPECT_CALL(from, Unlock());
 
     ASSERT_FALSE(tr.Make(from, to, 150));
 }
