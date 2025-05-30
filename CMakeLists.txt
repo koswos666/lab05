@@ -20,6 +20,7 @@ add_subdirectory(banking)
 
 add_executable(tests
     test/test.cpp
+    test/tests2.cpp  # Добавляем второй тестовый файл
 )
 
 target_link_libraries(tests PRIVATE
@@ -31,5 +32,3 @@ target_link_libraries(tests PRIVATE
 enable_testing()
 include(GoogleTest)
 gtest_discover_tests(tests)
-
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fprofile-arcs -ftest-coverage")
