@@ -440,3 +440,72 @@ int main(int argc, char **argv) {
     ::testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
 }
+// Тест на разблокировку при исключении в конструкторе Guard
+TEST(TransactionTest, GuardUnlocksOnConstructorException) {
+    class MockAccount : public Account {
+    public:
+        MockAccount(int id, int balance) : Account(id, balance) {}
+        void Lock() override { throw std::runtime_error("Lock failed"); }
+    };
+
+    MockAccount acc1(1, 1000);
+    Account acc2(2, 500);
+    Transaction tr;
+
+    ASSERT_THROW(tr.Make(acc1, acc2, 100), std::runtime_error);
+    ASSERT_NO_THROW(acc2.Lock()); // Проверяем что второй аккаунт разблокирован
+}
+
+// Тест на обработку исключения в ChangeBalance
+TEST(AccountTest, ChangeBalanceThrowsWhenLocked) {
+    Account acc(1, 100);
+    acc.Lock();
+    ASSERT_NO_THROW(acc.ChangeBalance(50));
+    
+    // Проверяем что после исключения аккаунт остается разблокированным
+    ASSERT_THROW(acc.ChangeBalance(50), std::runtime_error); 
+}
+
+// Тест на пограничное значение комиссии
+TEST(TransactionTest, ZeroFeeTransaction) {
+    Transaction tr;
+    tr.set_fee(0);
+    
+    Account acc1(1, 100);
+    Account acc2(2, 0);
+    
+    ASSERT_TRUE(tr.Make(acc1, acc2, 100));
+    ASSERT_EQ(acc1.GetBalance(), 0);
+    ASSERT_EQ(acc2.GetBalance(), 100);
+}
+
+// Тест на максимально возможную сумму транзакции
+TEST(TransactionTest, MaxIntTransaction) {
+    Transaction tr;
+    Account acc1(1, INT_MAX);
+    Account acc2(2, 0);
+    
+    ASSERT_TRUE(tr.Make(acc1, acc2, INT_MAX - tr.fee()));
+    ASSERT_EQ(acc1.GetBalance(), 0);
+    ASSERT_EQ(acc2.GetBalance(), INT_MAX - tr.fee());
+}
+
+// Тест на вызов SaveToDataBase при исключении
+TEST(TransactionTest, SaveToDatabaseExceptionLogging) {
+    class MockTransaction : public Transaction {
+    protected:
+        void SaveToDataBase(Account& from, Account& to, int sum) override {
+            throw std::runtime_error("DB connection failed");
+        }
+    };
+
+    MockTransaction mockTr;
+    Account acc1(1, 1000);
+    Account acc2(2, 500);
+    
+    testing::internal::CaptureStderr();
+    ASSERT_FALSE(mockTr.Make(acc1, acc2, 100));
+    std::string output = testing::internal::GetCapturedStderr();
+    
+    ASSERT_NE(output.find("DB connection failed"), std::string::npos);
+}
