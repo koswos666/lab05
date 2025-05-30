@@ -75,15 +75,16 @@ TEST(TransactionTest, MakeSuccessfulTransaction) {
     
     InSequence seq; // Важен порядок вызовов
     
-    EXPECT_CALL(from, Lock());
-    EXPECT_CALL(to, Lock());
-    EXPECT_CALL(from, GetBalance()).WillOnce(Return(200)); // Проверка в Make()
-    EXPECT_CALL(tr, SaveToDataBase(_, _, 100));
-    EXPECT_CALL(from, GetBalance()).WillOnce(Return(200)); // Проверка в Debit()
-    EXPECT_CALL(to, ChangeBalance(100));
-    EXPECT_CALL(from, ChangeBalance(-101));
-    EXPECT_CALL(from, Unlock());
-    EXPECT_CALL(to, Unlock());
+    // Ожидаемые вызовы при успешной транзакции
+    EXPECT_CALL(from, Lock()).Times(1);
+    EXPECT_CALL(to, Lock()).Times(1);
+    EXPECT_CALL(from, GetBalance()).WillOnce(Return(200));
+    EXPECT_CALL(tr, SaveToDataBase(Ref(from), Ref(to), 100)).Times(1);
+    EXPECT_CALL(from, GetBalance()).WillOnce(Return(200)); // Для Debit
+    EXPECT_CALL(to, ChangeBalance(100)).Times(1);
+    EXPECT_CALL(from, ChangeBalance(-101)).Times(1);
+    EXPECT_CALL(from, Unlock()).Times(1);
+    EXPECT_CALL(to, Unlock()).Times(1);
     
     EXPECT_TRUE(tr.Make(from, to, 100));
 }
