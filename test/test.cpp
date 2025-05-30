@@ -20,6 +20,11 @@ TEST(TransactionTest, FullTransferFlow) {
     MockAccount to(2, 500);
     Transaction tr;
 
+    // Перенаправляем cout
+    std::streambuf* old = std::cout.rdbuf();
+    std::stringstream buffer;
+    std::cout.rdbuf(buffer.rdbuf());
+
     // Установка ожиданий
     {
         InSequence seq;
@@ -38,7 +43,14 @@ TEST(TransactionTest, FullTransferFlow) {
         EXPECT_CALL(from, Unlock());
     }
 
+    // Ожидания для SaveToDataBase
+    EXPECT_CALL(from, GetBalance()).WillOnce(Return(1699));
+    EXPECT_CALL(to, GetBalance()).WillOnce(Return(800));
+
     ASSERT_TRUE(tr.Make(from, to, 300));
+    
+    // Восстанавливаем cout
+    std::cout.rdbuf(old);
 }
 
 TEST(TransactionTest, InvalidTransfers) {
