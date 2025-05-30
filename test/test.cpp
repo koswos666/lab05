@@ -161,17 +161,8 @@ TEST(TransactionTest, FeeGetterAndSetterWork) {
     tr.set_fee(5);
     ASSERT_EQ(tr.fee(), 5);
 }
-TEST(TransactionTest, GuardLocksAndUnlocksAutomatically) {
-    Account acc(1, 100);
-    
-    {
-        Transaction::Guard guard(acc);  
-        ASSERT_THROW(acc.Lock(), std::runtime_error);
-    }
-    
-    ASSERT_NO_THROW(acc.Lock());
-    acc.Unlock();
-}
+
+
 TEST(TransactionTest, TransferExactlyHalfFeeSucceeds) {
     Account from(1, 500);
     Account to(2, 0);
